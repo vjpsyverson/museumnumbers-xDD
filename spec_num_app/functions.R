@@ -40,9 +40,13 @@ extractSpecNos<-function(x){
         }
       }
     if(length(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
-      specnos<-words[speclocs][grepl("[[:digit:]]",words[speclocs])] #assign the ones with numbers in them to specnos
+      specnos<-words[speclocs][grepl("[[:digit:]]",words[speclocs])
+                               &!grepl("[^[:alnum:]][x\\+][0-9]+",words[speclocs])
+                               &!grepl("[[:digit:]]x[[:digit:]]",words[speclocs])] 
+                               #assign the ones with numbers in them that are not magnification numbers to specnos
     }
     if(length(specnos)>0){
+      specnos<-gsub("^-","",specnos) #strip initial hyphens
       inSentence[(nrow(inSentence)+1):(nrow(inSentence)+length(specnos)),]<-cbind(
         x["docid"],x["sentid"],rep(insts[k],length(specnos)),specnos,row.names=NULL,stringsAsFactors=F)
       }
