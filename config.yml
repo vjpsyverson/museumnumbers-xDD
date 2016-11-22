@@ -1,8 +1,8 @@
 # The name of the application (no spaces)
-app_name: stringed_instruments
+app_name: specimen_numbers
 
 # A brief description of the app.
-description : Find all the proper nouns which have adjectives modifying them. Dump the nouns and the adjectives into a text file.
+description : Given a Postgres "sentences" table, finds all specimen numbers mentioned in that table which are connected to the set of institutions whose abbreviations are currently given in the GDD "museums" dictionary (see it at https://geodeepdive.org/api/dictionaries?dict=museums&show_terms). Returns a data frame of tuples (docid, sentid, institution, specimen number) which is sent back to Postgres.
 
 # Your first and last name
 user: Example User
@@ -12,11 +12,11 @@ email: example.user@geodeepdive.org
 
 # The primary language the application is written in - will be used for installing dependencies
 # Current options are Python, R, and Go
-language: Python
+language: R
 
 # You can choose to specify a list of dictionaries, a list of terms, or both.
 # If both dictionaries and terms are provided, all terms in the dictionary PLUS
 # all listed terms will be used
-dictionaries: [instruments]
+dictionaries: [museums]
 
-terms: [theremin]
+terms: []
