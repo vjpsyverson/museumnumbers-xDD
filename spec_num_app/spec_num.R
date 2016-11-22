@@ -49,6 +49,7 @@ mus<-combineDuplicates(mm)
 #----------------------EXTRACT NUMBERS FROM DATAFRAME IN R----------------------------#
 specs<-extractMultiple(mus)
 
-#----------------------EXPORT RESULTS TO POSTGRES----------------------------#
+#----------------------EXPORT RESULTS TO OUTPUT FOLDER AND POSTGRES----------------------------#
+write.csv(file=file.path(dirname(this.dir),"output/specimens.csv"),specs)
 dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
 dbWriteTable(con,"specimens",specs,row.names=F)
