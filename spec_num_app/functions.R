@@ -21,7 +21,7 @@ extractSpecNos<-function(x){
   #extract tuples {docid, sentid, inst, specnos}
   inSentence<-data.frame(docid=numeric(),sentid=numeric(),inst=character(),specnos=character(),stringsAsFactors=F)
   for (k in 1:length(insts)){
-    findAbbr<-grep(insts[k],words,fixed=T) #find all instances of this institution abbreviation
+    findAbbr<-which(grepl(insts[k],words,fixed=T)&!grepl(paste0(insts[k],"[A-Z]"),words)) #find all instances of this institution abbreviation
     speclocs<-specnos<-numeric() #zero speclocs and specnos for each institution abbreviation
     if (length(findAbbr)>0) {
       for(j in 1:length(findAbbr)){ #catch all the number-like strings associated with each instance
