@@ -14,8 +14,7 @@ extractSpecNos<-function(x){
   words<-strsplit(gsub(",,,",",COMMA,",gsub("[(\"){}]","",x["words"])),",")[[1]] #remove punctuation rubble, clean up real commas
   for (k in 1:length(insts)){ #split words after institute abbreviations unless followed by another capital letter
     instPlusString<-paste0("(.*)(",insts[k],")([^A-Z]+)")
-    instLoc<-which(!grepl(longerInstNames,words))
-    if(length(instLoc)>0) {words<-gsub(instPlusString,paste0("\\1","\\2",",","\\3"),words)}
+    words<-gsub(instPlusString,paste0("\\1","\\2",",","\\3"),words)
   }
   words<-unlist(strsplit(words,",")) #split on nlp352's inserted commas
   words[which(words=="COMMA")]<-"," #re-insert real commas
