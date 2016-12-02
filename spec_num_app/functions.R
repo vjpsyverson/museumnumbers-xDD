@@ -29,7 +29,7 @@ extractSpecNos<-function(x){
         end<-start+1
         while (grepl("[[:digit:]]",words[end])==T|words[end]%in%fillers) {
           if (words[end]%in%fillers) {end<-end+1}
-          if (grepl("[[:digit:]]",words[end])==T) {
+          if (grepl("[1-9]",words[end])==T&!(grepl("^0\\.",words[end])&!grepl("(\\.)(.*)(\\.)",words[end]))) {
             speclocs<-c(speclocs,end)
             end<-end+1
           }
@@ -37,7 +37,8 @@ extractSpecNos<-function(x){
       }
     }
     if(length(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
-      specnos<-words[speclocs][grepl("[[:digit:]]",words[speclocs])] #assign the ones with numbers in them to specnos
+      numbers<-words[speclocs][grepl("[[:digit:]]",words[speclocs])] #assign the ones with numbers in them to "numbers"
+      specnos<-gsub("^[-/=\\.[:blank:]]","",numbers) #parse out any initial junk (-,/,=,., ) and send to "specnos"
     }
     if(length(specnos)>0){
       inSentence[(nrow(inSentence)+1):(nrow(inSentence)+length(specnos)),]<-cbind(
