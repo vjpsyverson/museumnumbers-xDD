@@ -2,13 +2,16 @@
 app_name: specimen_numbers
 
 # A brief description of the app.
-description : Given a Postgres "sentences" table, finds all specimen numbers mentioned in that table which are connected to the set of institutions whose abbreviations are currently given in the GDD "museums" dictionary (see it at https://geodeepdive.org/api/dictionaries?dict=museums&show_terms). Returns a data frame of tuples (docid, sentid, institution, specimen number) which is sent back to Postgres.
+description : Given a Postgres "sentences" table, finds all specimen numbers mentioned in that table which are connected to the set of institutions whose abbreviations are currently given in the GDD "museums" dictionary (see it at https://geodeepdive.org/api/dictionaries?dict=museums&show_terms) plus any additional listed in additional_abbrs.txt. Returns a data frame of tuples (docid, sentid, institution, specimen number) which is sent back to Postgres.
 
 # Your first and last name
-user: Example User
+user: Valerie Syverson
+
+# The NLP product to run the application against
+product: NLP352
 
 # Your email
-email: example.user@geodeepdive.org
+email: vsyverson@gmail.com
 
 # The primary language the application is written in - will be used for installing dependencies
 # Current options are Python, R, and Go

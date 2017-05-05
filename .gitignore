@@ -1,4 +1,8 @@
 .DS_Store
 
-credentials.yml
 *.swp
+credentials.yaml
+.Rproj.user
+*.Rproj
+*.Rhistory
+*.Rdata

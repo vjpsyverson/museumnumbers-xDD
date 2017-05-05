@@ -1,4 +1,4 @@
 #!/bin/sh
 
 # The command used to run your application
-python example_app/example_app.py
+Rscript app-template/specimens.R
