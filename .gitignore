@@ -6,3 +6,4 @@ credentials.yaml
 *.Rproj
 *.Rhistory
 *.Rdata
+*.csv
