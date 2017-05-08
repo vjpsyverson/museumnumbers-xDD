@@ -44,7 +44,7 @@ extractFromSentence<-function(sentence,abbr){
     specnos<-gsub("^[-/=\\.[:blank:]]","",numbers) #parse out any initial junk (-,/,=,., ) and send to "specnos"
   }
   if(length(specnos)>0){
-    result<-data.frame(sentrow=sentence["rownum"],docid=sentence["docid"],
+    result<-data.frame(sentrow=as.numeric(sentence["rownum"]),docid=sentence["docid"],
                        sentid=as.numeric(sentence["sentid"]),abbr=rep(abbr,length(specnos)),
                        specno=specnos,row.names=NULL,stringsAsFactors=F)
   }
