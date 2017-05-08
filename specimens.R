@@ -45,7 +45,7 @@ extractFromSentence<-function(sentence,abbr){
   }
   if(length(specnos)>0){
     result<-data.frame(sentrow=sentence["rownum"],docid=sentence["docid"],
-                       sentid=sentence["sentid"],abbr=rep(abbr,length(specnos)),
+                       sentid=as.numeric(sentence["sentid"]),abbr=rep(abbr,length(specnos)),
                        specno=specnos,row.names=NULL,stringsAsFactors=F)
   }
   if (length(result)>0){return(result)}
@@ -120,5 +120,14 @@ instRows<-sapply(museumAbbrs,function(x,y) grep(paste0(" ",x," "),y),mus$words) 
 #find all specimen numbers in each sentence associated with each instance of each abbreviation in museumAbbrs
 #(this is a wrapper function three apply()s deep, be warned)
 specimens<-extractFromList(instRows,mus) #15820 sent+abbr tuples parsed to 15236 specimen numbers, 17.4 seconds
+
+
+#----------------------OUTPUT RESULTS------------------------#
 write.csv(specimens,"output/specimens.csv")
 
+#optional stats output
+#dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
+#dbWriteTable(con,"specimens",specimens,row.names=F)
+#ndocs<-dbGetQuery(con,"SELECT DISTINCT concat_ws(' ', a.abbr, a.specno), count(*) FROM (SELECT DISTINCT docid,abbr,specno FROM specimens AS a) a GROUP BY concat_ws(' ', a.abbr, a.specno);")
+#ndocs<-ndocs[order(ndocs$count,ndocs$concat_ws,decreasing=T),]
+#write.csv(ndocs,"n_docs_mentioning_specimen.csv",row.names = F)
