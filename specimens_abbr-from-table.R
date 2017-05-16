@@ -98,22 +98,17 @@ drv<-dbDriver("PostgreSQL")
 con<-dbConnect(drv, dbname = Credentials["database:",], host = Credentials["host:",], port = Credentials["port:",], user = Credentials["user:",])
 
 #----------------------GET REDUCED TABLE FROM POSTGRES----------------------------#
-#pull museum abbreviations from geodeepdive dictionary via API
-print("Getting museum names from API and local list...")
-url<-"https://geodeepdive.org/api/dictionaries?dict=museums&show_terms"
-museumAllNames<-names(rjson::fromJSON(paste(suppressWarnings(readLines(url)),collapse = ""))$success$data[[1]]$term_hits)
-museumAbbrs<-museumAllNames[!grepl("[[:lower:]]",museumAllNames)]
-#add any other abbreviations stored locally
-if("additional_abbrs.txt"%in%dir()){
-  museumAbbrs<-unique(c(museumAbbrs,unname(unlist(read.table("additional_abbrs.txt",sep="\r",stringsAsFactors=F)))))
-  }
-
+#get museum abbreviations from local SQL db (change this when the GDD or PBDB API is reporting them better)
+print("Getting institution names from local database...")
+museumAbbrs<-dbGetQuery(con,"SELECT * FROM mus_abbrs")
+print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs
-dbColNames<-"docid,sentid,words"
-query<-paste0("SELECT ", dbColNames , ",regexp_matches(array_to_string(words,' '),' ",
-              paste(museumAbbrs,sep="",collapse=" | ")," ') FROM sentences_nlp352;")
+query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 
+              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ ' ", 
+              paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a ON a.docid=sentences_nlp352.docid 
+              WHERE array_to_string(sentences_nlp352.words,' ') ~ '",paste(museumAbbrs$abbr,sep="",collapse=" | ")," ';")
 print("Querying database for sentences...")
-time<-system.time(mm<-dbGetQuery(con,query)[,unlist(strsplit(dbColNames,","))])
+time<-system.time(mm<-dbGetQuery(con,query))
 print(paste("Got",nrow(mm),"sentences in",signif(unname(time[3]),3),"seconds."))
 #label, number, and clean result
 mus<-data.frame(docid=mm[,"docid"],sentid=mm[,"sentid"],
@@ -123,12 +118,12 @@ rm(mm)
 
 #grep all museumAbbrs against all sentences, with spaces added to avoid the "UCMP"/"UCM"/"CM" problem
 print("Finding all museum abbreviations...")
-time<-system.time(instRows<-sapply(museumAbbrs,function(x,y) grep(paste0(" ",x," "),y),mus$words))
+time<-system.time(instRows<-sapply(unique(museumAbbrs$abbr),function(x,y) grep(paste0(" ",x," "),y),mus$words))
 print(paste("Found",length(unlist(instRows)),"instances of",length(instRows),"abbreviations in",signif(unname(time[3]),3),"seconds."))
 #find all specimen numbers in each sentence associated with each instance of each abbreviation in museumAbbrs
 #(this is a wrapper function three apply()s deep, be warned)
 print("Extracting specimen numbers...")
-time<-system.time(specimens<-extractFromList(instRows,mus)) #15820 sent+abbr tuples parsed to 15236 specimen numbers, 17.4 seconds
+time<-system.time(specimens<-extractFromList(instRows,mus))
 print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3),"seconds. Results in output/specimens.csv"))
 
 #----------------------OUTPUT RESULTS------------------------#
