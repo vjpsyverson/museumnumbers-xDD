@@ -23,12 +23,15 @@ extractFromList<-function(instSpecList,data){
 extractFromNamedVector<-function(instRow,data,name){
   if (length(unlist(instRow))==0) {
     result<-NULL
+    print(paste("No specimens found for",name))
   } else {
     specsByRow<-apply(data[instRow,],1,extractFromSentence,name)
     if(length(specsByRow)==0){
       result<-NULL
+      print(paste("No specimens found for",name))
     } else {
       result<-do.call(rbind.data.frame,specsByRow)
+      print(paste(nrow(result),"specimens found for",name))
     }
   }
   return(result)
@@ -38,15 +41,15 @@ extractFromSentence<-function(sentence,abbr){
   words<-unlist(strsplit(as.character(sentence["words"])," "))
   findAbbr<-which(grepl(abbr,words,fixed=T)&!grepl(paste0(abbr,"[A-Z]"),words)) #find all instances of this institution abbreviation
   specnos<-result<-numeric() #zero speclocs and specnos for each institution abbreviation
-  speclocs<-unlist(sapply(findAbbr,getNumbersAfter,words)) #catch all the number-like strings associated with each instance
+  speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,words)) #catch all the number-like strings associated with each instance
   if(length(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
-    numbers<-words[speclocs][grepl("[[:digit:]]",words[speclocs])] #assign the ones with numbers in them to "numbers"
+    numbers<-words[speclocs$speclocs][grepl("[[:digit:]]",words[speclocs$speclocs])] #assign the ones with numbers in them to "numbers"
     specnos<-gsub("^[-/=\\.[:blank:]]","",numbers) #parse out any initial junk (-,/,=,., ) and send to "specnos"
   }
   if(length(specnos)>0){
     result<-data.frame(sentrow=as.numeric(sentence["rownum"]),docid=sentence["docid"],
                        sentid=as.numeric(sentence["sentid"]),abbr=rep(abbr,length(specnos)),
-                       specno=specnos,row.names=NULL,stringsAsFactors=F)
+                       specno=specnos,abbrloc=speclocs[,1],specloc=speclocs[,2],row.names=NULL,stringsAsFactors=F)
   }
   if (length(result)>0){return(result)}
 }
@@ -57,16 +60,16 @@ getNumbersAfter<-function(abbrLoc,words){
   start<-abbrLoc
   end<-start+1
   while (grepl("[[:digit:]]",words[end])==T|words[end]%in%fillers) {
-    if (words[end]%in%fillers) {end<-end+1}
-    if (grepl("[1-9]",words[end])
-        & !grepl("^[[:digit:]]*x[[:digit:]]",words[end])
-        & !(grepl("^0\\.",words[end]) 
+    if (words[end]%in%fillers) {end<-end+1} #move on
+    if (grepl("[[:digit:]]{2,}",words[end]) #at least two digits
+        & !grepl("^[[:digit:]]*x[[:digit:]]",words[end]) #not dimensions eg "10x12"
+        & !(grepl("^0\\.",words[end]) #not a decimal beginning with "0."
             & !grepl("(\\.)(.*)(\\.)",words[end]))) {
       speclocs<-c(speclocs,end)
       end<-end+1
     } else { break }
   }
-  if(length(speclocs)>0){return(speclocs)}
+  if(length(speclocs)>0){return(cbind(rep(abbrLoc,length(speclocs)),speclocs))}
 }
 
 

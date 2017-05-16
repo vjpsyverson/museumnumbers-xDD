@@ -7,3 +7,4 @@ credentials.yaml
 *.Rhistory
 *.Rdata
 *.csv
+buffer.R
