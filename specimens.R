@@ -62,10 +62,12 @@ getNumbersAfter<-function(abbrLoc,words){
   while (grepl("[[:digit:]]",words[end])==T|words[end]%in%fillers) {
     if (words[end]%in%fillers) {end<-end+1} #move on
     if (grepl("[[:digit:]]{2,}",words[end]) #at least two digits
-        & !grepl("^[[:digit:]]*x[[:digit:]]",words[end]) #not dimensions eg "10x12"
-        & !(grepl("^0\\.",words[end]) #not a decimal beginning with "0."
-            & !grepl("(\\.)(.*)(\\.)",words[end]))) {
-      speclocs<-c(speclocs,end)
+        & !grepl("(^[[:digit:]]*x[[:digit:]])|
+                 (^0\\.[[:digit:]]+$)|
+                 (^[[:digit:]]+[c|d|k|m]?m$)|
+                 (^d[0-9]{2}[A-Z]{1}$)",words[end]) {
+          #not: dimensions eg "10x12"; a decimal beginning with "0."; a measurement in cm/dm/km/mm; an isotopic ratio 
+          speclocs<-c(speclocs,end)
       end<-end+1
     } else { break }
   }
