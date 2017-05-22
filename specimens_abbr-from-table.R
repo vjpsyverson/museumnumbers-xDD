@@ -101,8 +101,9 @@ con<-dbConnect(drv, dbname = Credentials["database:",], host = Credentials["host
 
 #----------------------GET REDUCED TABLE FROM POSTGRES----------------------------#
 #get museum abbreviations from local SQL db (change this when the GDD or PBDB API is reporting them better)
-print("Getting institution names from local database...")
-museumAbbrs<-dbGetQuery(con,"SELECT * FROM mus_abbrs")
+#print("Getting institution names from local database...")
+#museumAbbrs<-dbGetQuery(con,"SELECT * FROM mus_abbrs")
+museumAbbrs<-read.csv(file="mus_abbrs.csv")
 print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs
 query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 

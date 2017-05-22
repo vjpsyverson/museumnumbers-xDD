@@ -7,4 +7,5 @@ credentials.yaml
 *.Rhistory
 *.Rdata
 *.csv
+!mus_abbrs.csv
 buffer.R
