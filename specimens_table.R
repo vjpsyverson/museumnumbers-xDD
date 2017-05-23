@@ -128,10 +128,3 @@ print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3
 
 #----------------------OUTPUT RESULTS------------------------#
 write.csv(specimens,"output/specimens.csv")
-
-#optional stats output
-#dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
-#dbWriteTable(con,"specimens",specimens,row.names=F)
-#ndocs<-dbGetQuery(con,"SELECT DISTINCT concat_ws(' ', a.abbr, a.specno), count(*) FROM (SELECT DISTINCT docid,abbr,specno FROM specimens AS a) a GROUP BY concat_ws(' ', a.abbr, a.specno);")
-#ndocs<-ndocs[order(ndocs$count,ndocs$concat_ws,decreasing=T),]
-#write.csv(ndocs,"n_docs_mentioning_specimen.csv",row.names = F)

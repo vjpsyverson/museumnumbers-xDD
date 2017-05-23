@@ -125,8 +125,9 @@ rm(mm)
 
 #grep all museumAbbrs against all sentences, with spaces added to avoid the "UCMP"/"UCM"/"CM" problem
 print("Finding all museum abbreviations...")
-time<-system.time(instRows<-sapply(museumAbbrs,function(x,y) grep(paste0(" ",x," "),y),mus$words))
+time<-system.time(instRows<-sapply(sort(museumAbbrs),function(x,y) grep(paste0(" ",x," "),y),mus$words))
 print(paste("Found",length(unlist(instRows)),"instances of",length(instRows),"abbreviations in",signif(unname(time[3]),3),"seconds."))
+names(instRows)<-sort(museumAbbrs)
 #find all specimen numbers in each sentence associated with each instance of each abbreviation in museumAbbrs
 #(this is a wrapper function three apply()s deep, be warned)
 print("Extracting specimen numbers...")
@@ -135,10 +136,3 @@ print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3
 
 #----------------------OUTPUT RESULTS------------------------#
 write.csv(specimens,"output/specimens.csv")
-
-#optional stats output
-#dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
-#dbWriteTable(con,"specimens",specimens,row.names=F)
-#ndocs<-dbGetQuery(con,"SELECT DISTINCT concat_ws(' ', a.abbr, a.specno), count(*) FROM (SELECT DISTINCT docid,abbr,specno FROM specimens AS a) a GROUP BY concat_ws(' ', a.abbr, a.specno);")
-#ndocs<-ndocs[order(ndocs$count,ndocs$concat_ws,decreasing=T),]
-#write.csv(ndocs,"n_docs_mentioning_specimen.csv",row.names = F)
