@@ -117,8 +117,9 @@ rm(mm)
 
 #grep all museumAbbrs against all sentences, with spaces added to avoid the "UCMP"/"UCM"/"CM" problem
 print("Finding all museum abbreviations...")
-time<-system.time(instRows<-sapply(unique(museumAbbrs$abbr),function(x,y) grep(paste0(" ",x," "),y),mus$words))
+time<-system.time(instRows<-sapply(sort(unique(museumAbbrs$abbr)),function(x,y) grep(paste0(" ",x," "),y),mus$words))
 print(paste("Found",length(unlist(instRows)),"instances of",length(instRows),"abbreviations in",signif(unname(time[3]),3),"seconds."))
+names(instRows)<-sort(unique(museumAbbrs$abbr))
 #find all specimen numbers in each sentence associated with each instance of each abbreviation in museumAbbrs
 #(this is a wrapper function three apply()s deep, be warned)
 print("Extracting specimen numbers...")
