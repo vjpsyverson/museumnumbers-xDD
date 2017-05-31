@@ -127,4 +127,4 @@ time<-system.time(specimens<-extractFromList(instRows,mus))
 print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3),"seconds. Results in output/specimens.csv"))
 
 #----------------------OUTPUT RESULTS------------------------#
-write.csv(specimens,"output/specimens.csv")
+write.csv(specimens,"output/specimens.csv",row.names = F)
