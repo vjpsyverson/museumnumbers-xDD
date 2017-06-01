@@ -55,7 +55,7 @@ extractFromSentence<-function(sentence,abbr){
 }
 
 getNumbersAfter<-function(abbrLoc,words){
-  fillers<-c("No.","cat.", "no.","number","numbers",",","and","-")
+  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.",",","and","&","-")
   speclocs<-numeric()
   start<-abbrLoc
   end<-start+1
@@ -80,14 +80,7 @@ if (require("rjson",warn.conflicts=FALSE)==FALSE) {
   install.packages("rjson",repos="http://cran.cnr.berkeley.edu/");
   library("rjson");
 }
-
-#locate correct directory -- run this if you're running line by line rather than from console
-#this is super ugly but there is, alas, currently no good way to do it
-#if("specimens.R"%in%dir()){
-#  this.dir<-getwd()} else {
-#    print("Please locate this script in your directory structure.")
-#    this.dir<-dirname(file.choose())
-#  }
+options(stringsAsFactors = FALSE)
 
 #connect to PostgreSQL
 #Credentials<-as.matrix(read.table(file.path(this.dir,"credentials.yaml"),row.names=1,fill=TRUE))
@@ -100,12 +93,14 @@ con<-dbConnect(drv, dbname = Credentials["database:",], host = Credentials["host
 #print("Getting institution names from local database...")
 #museumAbbrs<-dbGetQuery(con,"SELECT * FROM mus_abbrs")
 museumAbbrs<-read.csv(file="mus_abbrs.csv")
+museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
 print(paste("Got",nrow(museumAbbrs),"institution names"))
-#get sentences from SQL containing at least one abbreviation from museumAbbrs
+#get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
 query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 
-              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ ' ", 
-              paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a ON a.docid=sentences_nlp352.docid 
-              WHERE array_to_string(sentences_nlp352.words,' ') ~ '",paste(museumAbbrs$abbr,sep="",collapse=" | ")," ';")
+              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
+              AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
+              ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
+              paste(museumAbbrs$abbr,sep="",collapse=" | ")," ';")
 print("Querying database for sentences...")
 time<-system.time(mm<-dbGetQuery(con,query))
 print(paste("Got",nrow(mm),"sentences in",signif(unname(time[3]),3),"seconds."))
