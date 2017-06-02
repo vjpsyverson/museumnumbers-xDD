@@ -4,11 +4,16 @@ substrRight <- function(x, n){
   substr(x, (nchar(x)-n+1), nchar(x))
 }
 trimWhitespace <- function(x) gsub("^\\s+|\\s+$", "", x)
-cleanWords<-function(x){
+cleanWords<-function(x,abbrs){
   #acquire, clean, and split words
-  result<-strsplit(gsub(",,,",",COMMA,",gsub("[(\"){}]","",x)),",")[[1]] #remove punctuation rubble, clean up real commas
-  result<-unlist(strsplit(result,",")) #split on nlp352's inserted commas
+  result<-gsub("[\\\"{}]","",gsub("-",",-,",gsub("-RRB-",")",gsub("-LRB-","(",x)))) #remove punctuation rubble
+  result<-strsplit(gsub(",,,",",COMMA,",result),",")[[1]] #clean up real commas and split
   result[which(result=="COMMA")]<-"," #re-insert real commas
+  abbrs<-abbrs[order(nchar(abbrs),decreasing = T)]
+  for (i in 1:length(abbrs)){ #iterate through 
+    loc<-which(grepl(abbrs[i],result)&!grepl(paste0(abbrs[i],"$",collapse=""),result)&!grepl(paste0(abbrs[1:(i-1)],collapse="|"),result))
+    result[loc]<-gsub(abbrs[i],paste0(abbrs[i]," "),result[loc])
+  } #if this is stupid move it into extractFromSentence() so it executes with the other greps there
   return(paste0(result,collapse=' ')) #put it back together with spaces instead
 }
 ##the real functions
@@ -55,7 +60,7 @@ extractFromSentence<-function(sentence,abbr){
 }
 
 getNumbersAfter<-function(abbrLoc,words){
-  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.",",","and","&","-")
+  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.",",","and","&","-","through")
   speclocs<-numeric()
   start<-abbrLoc
   end<-start+1
@@ -100,13 +105,13 @@ query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_n
               JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
               AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
               ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
-              paste(museumAbbrs$abbr,sep="",collapse=" | ")," ';")
+              paste(museumAbbrs$abbr,sep="",collapse="|")," ';")
 print("Querying database for sentences...")
 time<-system.time(mm<-dbGetQuery(con,query))
 print(paste("Got",nrow(mm),"sentences in",signif(unname(time[3]),3),"seconds."))
 #label, number, and clean result
 mus<-data.frame(docid=mm[,"docid"],sentid=mm[,"sentid"],
-                words=unname(sapply(mm$words,cleanWords)),
+                words=unname(sapply(mm$words,cleanWords,museumAbbrs$abbr)),
                 rownum=as.numeric(rownames(mm)),stringsAsFactors = F)
 rm(mm)
 
