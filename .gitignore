@@ -2,6 +2,7 @@
 
 *.swp
 credentials.yaml
+credentials.yml
 .Rproj.user
 *.Rproj
 *.Rhistory
