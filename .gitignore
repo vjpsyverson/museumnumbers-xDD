@@ -10,3 +10,4 @@ credentials.yml
 *.csv
 !mus_abbrs.csv
 buffer.R
+*.txt
