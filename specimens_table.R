@@ -7,7 +7,7 @@ trimWhitespace <- function(x) gsub("^\\s+|\\s+$", "", x)
 cleanWords<-function(x,abbrs){
   #acquire, clean, and split words
   result<-gsub("[\\\"{}]","",gsub("-",",-,",gsub("-RRB-",")",gsub("-LRB-","(",x)))) #remove punctuation rubble
-  result<-strsplit(gsub(",,,",",COMMA,",result),",")[[1]] #clean up real commas and split
+  result<-strsplit(gsub(",,","",gsub(",,,",",COMMA,",result)),",")[[1]] #clean up real commas and split
   result[which(result=="COMMA")]<-"," #re-insert real commas
   abbrs<-abbrs[order(nchar(abbrs),decreasing = T)]
   for (i in 1:length(abbrs)){ #iterate through 
@@ -43,36 +43,68 @@ extractFromNamedVector<-function(instRow,data,name){
 }
 
 extractFromSentence<-function(sentence,abbr){
+  #print(c(sentence["docid"],sentence["sentid"]))
   words<-unlist(strsplit(as.character(sentence["words"])," "))
   findAbbr<-which(grepl(abbr,words,fixed=T)&!grepl(paste0(abbr,"[A-Z]"),words)) #find all instances of this institution abbreviation
-  specnos<-result<-numeric() #zero speclocs and specnos for each institution abbreviation
+  specnos<-speclocs<-nextWords<-result<-numeric() #zero speclocs and specnos for each institution abbreviation
   speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,words)) #catch all the number-like strings associated with each instance
-  if(length(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
-    numbers<-words[speclocs$speclocs][grepl("[[:digit:]]",words[speclocs$speclocs])] #assign the ones with numbers in them to "numbers"
-    specnos<-gsub("^[-/=\\.[:blank:]]","",numbers) #parse out any initial junk (-,/,=,., ) and send to "specnos"
+  if(!any(grepl("[Ll]ocality|[Ll]ocalities",unlist(lapply(findAbbr,function(x) return(words[max(c(0,x-3)):min(c(length(words),x+3))])))))) {
+    #skip locality numbers
+    speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,words)) #catch all the number-like strings associated with each instance
+    if(any(as.logical(speclocs$sentEnded))){
+      nextSent<-dbGetQuery(con,paste0("SELECT docid,sentid,wordidx,words FROM sentences_nlp352 WHERE docid='",sentence["docid"],"' AND sentid=",as.numeric(sentence["sentid"])+1,";"))
+      if(ncol(nextSent)>0) {
+        nextWords<-unlist(strsplit(cleanWords(as.character(nextSent$words),abbr)," "))
+        speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,c(words,nextWords)))
+      }
+    }
+  } else { speclocs<-matrix(,nrow=0,ncol=0) }
+  if(nrow(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
+    speclocs<-apply(speclocs[,1:3],c(1,2),as.numeric)
+    if(nrow(speclocs)>1) {
+      numbers<-unlist(lapply(apply(unname(speclocs),1,function(x) seq(x[2],x[3])),function(x,y) (paste0(y[x],collapse=" ")),c(words,nextWords)))
+    } else {
+      numbers<-paste0(c(words,nextWords)[speclocs[,2]:speclocs[,3]],collapse=" ")
+    }
+    numbers<-numbers[grepl("[[:digit:]]",numbers)] #assign the ones with numbers in them to "numbers"
+    specnos<-gsub("[-/=\\.[:blank:]]$","",gsub("^[-/=\\.[:blank:]]","",numbers)) #parse out any initial or final junk (-,/,=,., ) and send to "specnos"
   }
   if(length(specnos)>0){
-    result<-data.frame(sentrow=as.numeric(sentence["rownum"]),docid=sentence["docid"],
-                       sentid=as.numeric(sentence["sentid"]),abbr=rep(abbr,length(specnos)),
-                       specno=specnos,abbrloc=speclocs[,1],specloc=speclocs[,2],row.names=NULL,stringsAsFactors=F)
+    result<-data.frame(sentrow=as.numeric(sentence["rownum"]),docid=sentence["docid"],sentid=sentence["sentid"],
+                       abbr=rep(abbr,length(specnos)),specno=specnos,abbrloc=speclocs[,1],
+                       specloc=apply(speclocs,1,function(x) paste0(seq(x[2],x[3]),collapse = ",")),
+                       row.names=NULL,stringsAsFactors=F)
   }
   if (length(result)>0){return(result)}
 }
 
 getNumbersAfter<-function(abbrLoc,words){
-  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.",",","and","&","-","through")
-  speclocs<-numeric()
+  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.","and","&","-",".")
+  speclocs<-character()
   start<-abbrLoc
   end<-start+1
-  while (grepl("[[:digit:]]",words[end])==T|words[end]%in%fillers) {
-    if (words[end]%in%fillers) {end<-end+1} #move on
-    if (grepl("[[:digit:]]{2,}",words[end]) & !grepl("(^[[:digit:]]*x[[:digit:]])|(^0\\.[[:digit:]]+$)|(^[[:digit:]]+[c|d|k|m]?m$)|(^d[0-9]{2}[A-Z]{1}$)",words[end])) {
-          #not: dimensions eg "10x12"; a decimal beginning with "0."; a measurement in cm/dm/km/mm; an isotopic ratio 
+  sentEnded<-F
+  while (grepl("[[:digit:]]|^[IVXLCM]+$",words[end])==T|words[end]%in%fillers) {
+    if (words[end]%in%fillers | grepl("^[IVXLCM]+$",words[end])) { 
+      if (words[end] == "." & end==length(words)){
+        sentEnded <- T
+        break
+      } else {
+        if (grepl("^[[:punct:]]+$|^[IVXLCM]+$",words[end]) & words[end]!=",") {
+          speclocs<-c(speclocs,end)
+        }
+        end<-end+1 #move on
+      }
+    } else if (grepl("[[:digit:]]",words[end]) & !grepl("(^[[:digit:]]*x[[:digit:]])|(^[[:digit:]]+\\.[[:digit:]]+$)|(^[[:digit:]]+[c|d|k|m]?m$)|(^d[0-9]{2}[A-Z]{1}$)",words[end])) {
+      #not: dimensions eg "10x12"; a measurement in cm/dm/km/mm; an isotopic ratio 
       speclocs<-c(speclocs,end)
       end<-end+1
     } else { break }
   }
-  if(length(speclocs)>0){return(cbind(rep(abbrLoc,length(speclocs)),speclocs))}
+  if(length(grep("[[:digit:]]",words[range(as.numeric(speclocs))]))>0){
+    result<-cbind(abbrloc=rep(abbrLoc,length(speclocs)),speclocs.start=min(as.numeric(speclocs)),speclocs.end=max(as.numeric(speclocs)),sentEnded)
+    return(unique(result))
+  }
 }
 
 
@@ -128,3 +160,10 @@ print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3
 
 #----------------------OUTPUT RESULTS------------------------#
 write.csv(specimens,"output/specimens.csv",row.names = F)
+
+#optional stats output
+#dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
+#dbWriteTable(con,"specimens",specimens,row.names=F)
+#ndocs<-dbGetQuery(con,"SELECT DISTINCT concat_ws(' ', a.abbr, a.specno), count(*) FROM (SELECT DISTINCT docid,abbr,specno FROM specimens AS a) a GROUP BY concat_ws(' ', a.abbr, a.specno);")
+#ndocs<-ndocs[order(ndocs$count,ndocs$concat_ws,decreasing=T),]
+#write.csv(ndocs,"n_docs_mentioning_specimen.csv",row.names = F)
