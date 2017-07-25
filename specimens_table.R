@@ -43,7 +43,7 @@ extractFromNamedVector<-function(instRow,data,name){
 }
 
 extractFromSentence<-function(sentence,abbr){
-  #print(c(sentence["docid"],sentence["sentid"]))
+  print(paste0("docid=",sentence["docid"],", sentid=",sentence["sentid"],", abbr=",abbr,collapse=""))
   words<-unlist(strsplit(as.character(sentence["words"])," "))
   findAbbr<-which(grepl(abbr,words,fixed=T)&!grepl(paste0(abbr,"[A-Z]"),words)) #find all instances of this institution abbreviation
   specnos<-speclocs<-nextWords<-result<-numeric() #zero speclocs and specnos for each institution abbreviation
@@ -133,13 +133,14 @@ museumAbbrs<-read.csv(file="mus_abbrs.csv")
 museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
 print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
-query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 
+query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 
               JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
               AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
               ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
               paste(museumAbbrs$abbr,sep="",collapse="|")," ';")
 print("Querying database for sentences...")
-time<-system.time(mm<-dbGetQuery(con,query))
+time<-system.time(dbSendQuery(con,query))
+mm<-dbGetQuery(con,"SELECT * FROM sentences_temp;")
 print(paste("Got",nrow(mm),"sentences in",signif(unname(time[3]),3),"seconds."))
 #label, number, and clean result
 mus<-data.frame(docid=mm[,"docid"],sentid=mm[,"sentid"],
