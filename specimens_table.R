@@ -48,6 +48,7 @@ extractFromSentence<-function(sentence,abbr){
   findAbbr<-which(grepl(abbr,words,fixed=T)&!grepl(paste0(abbr,"[A-Z]"),words)) #find all instances of this institution abbreviation
   specnos<-speclocs<-nextWords<-result<-numeric() #zero speclocs and specnos for each institution abbreviation
   speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,words)) #catch all the number-like strings associated with each instance
+  nextWords<-""
   if(!any(grepl("[Ll]ocality|[Ll]ocalities",unlist(lapply(findAbbr,function(x) return(words[max(c(0,x-3)):min(c(length(words),x+3))])))))) {
     #skip locality numbers
     speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,words)) #catch all the number-like strings associated with each instance
@@ -58,7 +59,7 @@ extractFromSentence<-function(sentence,abbr){
         speclocs<-do.call(rbind.data.frame,lapply(findAbbr,getNumbersAfter,c(words,nextWords)))
       }
     }
-  } else { speclocs<-matrix(,nrow=0,ncol=0) }
+  } else { speclocs<-matrix(0,nrow=0,ncol=0) }
   if(nrow(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
     speclocs<-apply(speclocs[,1:3],c(1,2),as.numeric)
     if(nrow(speclocs)>1) {
@@ -71,7 +72,7 @@ extractFromSentence<-function(sentence,abbr){
   }
   if(length(specnos)>0){
     result<-data.frame(sentrow=as.numeric(sentence["rownum"]),docid=sentence["docid"],sentid=sentence["sentid"],
-                       abbr=rep(abbr,length(specnos)),specno=specnos,abbrloc=speclocs[,1],
+                       abbr=abbr,specno=specnos,abbrloc=speclocs[,1],
                        specloc=apply(speclocs,1,function(x) paste0(seq(x[2],x[3]),collapse = ",")),
                        row.names=NULL,stringsAsFactors=F)
   }
@@ -79,7 +80,7 @@ extractFromSentence<-function(sentence,abbr){
 }
 
 getNumbersAfter<-function(abbrLoc,words){
-  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.","and","&","-",".")
+  fillers<-c("Catalog","catalog","Catalogue","catalogue","Cat.","cat.","Number","number","Numbers","numbers","No.","no.","and","&","-",".",",")
   speclocs<-character()
   start<-abbrLoc
   end<-start+1
