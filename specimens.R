@@ -63,12 +63,13 @@ extractFromSentence<-function(sentence,abbr){
   if(nrow(speclocs)>0){ #if any instance of this abbreviation is associated with any numbers
     speclocs<-apply(speclocs[,1:3],c(1,2),as.numeric)
     if(nrow(speclocs)>1) {
-      numbers<-unlist(lapply(apply(unname(speclocs),1,function(x) seq(x[2],x[3])),function(x,y) (paste0(y[x],collapse=" ")),c(words,nextWords)))
+      numberRanges<-lapply(apply(unname(speclocs),1,function(x) list(seq(x[2],x[3]))),"[[",1)
+      numbers<-unlist(lapply(numberRanges,function(x,y) (paste0(y[x],collapse=" ")),c(words,nextWords)))
     } else {
       numbers<-paste0(c(words,nextWords)[speclocs[,2]:speclocs[,3]],collapse=" ")
     }
     numbers<-numbers[grepl("[[:digit:]]",numbers)] #assign the ones with numbers in them to "numbers"
-    specnos<-gsub("[-/=\\.[:blank:]]$","",gsub("^[-/=\\.[:blank:]]","",numbers)) #parse out any initial or final junk (-,/,=,., ) and send to "specnos"
+    specnos<-gsub("[-/=\\.[:blank:]]+$","",gsub("^[-/=\\.[:blank:]]+","",numbers)) #parse out any initial or final junk (-,/,=,., ) and send to "specnos"
   }
   if(length(specnos)>0){
     result<-data.frame(sentrow=as.numeric(sentence["rownum"]),docid=sentence["docid"],sentid=sentence["sentid"],
@@ -134,19 +135,28 @@ museumAbbrs<-read.csv(file="mus_abbrs.csv")
 museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
 print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
-query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 
-              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
-              AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
-              ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
-              paste(museumAbbrs$abbr,sep="",collapse="|")," ';")
-print("Querying database for sentences...")
-time<-system.time(dbSendQuery(con,query))
+#  old regexp-y version, commented out:
+#  query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 
+#              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
+#              AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
+#              ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
+#              paste(museumAbbrs$abbr,sep="",collapse="|")," ';")
+#  print("Querying database for sentences...")
+#  time<-system.time(dbSendQuery(con,query))
+dbSendQuery(con,"DROP TABLE IF EXISTS mus_abbrs;DROP TABLE IF EXISTS sentences_temp;")
+dbWriteTable(con,"mus_abbrs",museumAbbrs,row.names=F)
+query<-"SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 JOIN 
+(SELECT DISTINCT sentences_nlp352.docid,mus_abbrs.abbr FROM sentences_nlp352 JOIN mus_abbrs 
+ON array_to_string(sentences_nlp352.words,' ') ~ mus_abbrs.fullname) a
+ON a.docid=sentences_nlp352.docid AND array_to_string(sentences_nlp352.words,' ') ~ a.abbr;"
+print("Getting sentences...")
+dbSendQuery(con,query)
 mm<-dbGetQuery(con,"SELECT * FROM sentences_temp;")
-print(paste("Got",nrow(mm),"sentences in",signif(unname(time[3]),3),"seconds."))
 #label, number, and clean result
-mus<-data.frame(docid=mm[,"docid"],sentid=mm[,"sentid"],
-                words=unname(sapply(mm$words,cleanWords,museumAbbrs$abbr)),
-                rownum=as.numeric(rownames(mm)),stringsAsFactors = F)
+time<-system.time(mus<-data.frame(docid=mm[,"docid"],sentid=mm[,"sentid"],
+                                  words=unname(sapply(mm$words,cleanWords,museumAbbrs$abbr)),
+                                  rownum=as.numeric(rownames(mm)),stringsAsFactors = F))
+print(paste("Got",nrow(mus),"sentences in",signif(unname(time[3]),3),"seconds."))
 rm(mm)
 
 #grep all museumAbbrs against all sentences, with spaces added to avoid the "UCMP"/"UCM"/"CM" problem
