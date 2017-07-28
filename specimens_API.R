@@ -119,6 +119,10 @@ if (require("rjson",warn.conflicts=FALSE)==FALSE) {
   install.packages("rjson",repos="http://cran.cnr.berkeley.edu/");
   library("rjson");
 }
+if (require("curl",warn.conflicts=FALSE)==FALSE) {
+  install.packages("curl",repos="http://cran.cnr.berkeley.edu/");
+  library("curl");
+}
 options(stringsAsFactors = FALSE)
 
 #connect to PostgreSQL
@@ -135,28 +139,35 @@ museumAbbrs<-read.csv(file="mus_abbrs.csv")
 museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
 print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
-#  old regexp-y version, commented out:
-#  query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 
-#              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
-#              AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
-#              ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
-#              paste(museumAbbrs$abbr,sep="",collapse="|")," ';")
-#  print("Querying database for sentences...")
-#  time<-system.time(dbSendQuery(con,query))
-dbSendQuery(con,"DROP TABLE IF EXISTS mus_abbrs;DROP TABLE IF EXISTS sentences_temp;")
-dbWriteTable(con,"mus_abbrs",museumAbbrs,row.names=F)
-query<-"SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 JOIN 
-(SELECT DISTINCT sentences_nlp352.docid,mus_abbrs.abbr FROM sentences_nlp352 JOIN mus_abbrs 
-ON array_to_string(sentences_nlp352.words,' ') ~ mus_abbrs.fullname) a
-ON a.docid=sentences_nlp352.docid AND array_to_string(sentences_nlp352.words,' ') ~ a.abbr;"
+getDocIDs<-function(abbr){
+  APIurl<-paste0('https://geodeepdive.org/api/articles?term=',abbr,'&fields=_gddid')
+  result<-data.frame(jsonlite::fromJSON(APIurl,flatten=TRUE))["success._gddid"]
+}
+getSentences<-function(namepair){
+  docIDs<-getDocIDs(namepair["abbr"])
+  print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["abbr"],". Searching for ",namepair["fullname"],"...",collapse=""))
+  dbWriteTable(con,"ids",data.frame(gddid=unname(docIDs)),row.names=F)
+  query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 JOIN (SELECT sentences_nlp352.docid FROM sentences_nlp352 JOIN ids ON ids.gddid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["fullname"],"') b ON b.docid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["abbr"],"';",collapse="")
+  result<-dbGetQuery(con,query)
+  if(nrow(result)>0){
+    dbWriteTable(con,"addsents",result,row.names=F)
+    dbSendQuery(con,"INSERT INTO sentences_temp SELECT * FROM addsents;DROP TABLE ids;DROP TABLE addsents;")
+  } 
+  print(paste0("Got ",nrow(result)," sentences for ",namepair["fullname"]," / ",namepair["abbr"],".",collapse = ""))
+}
 print("Getting sentences...")
-dbSendQuery(con,query)
-mm<-dbGetQuery(con,"SELECT * FROM sentences_temp;")
+list<-names(jsonlite::fromJSON("https://geodeepdive.org/api/dictionaries?dict_id=20&show_terms=true")$success$data$term_hits)
+museumAbbrs<-subset(museumAbbrs,museumAbbrs$abbr%in%intersect(list,museumAbbrs$abbr))
+dbSendQuery(con,"DROP TABLE IF EXISTS sentences_temp;CREATE TABLE sentences_temp (docid text,sentid integer,words text);DROP TABLE IF EXISTS ids;DROP TABLE IF EXISTS addsents;")
+time<-system.time(apply(museumAbbrs,1,getSentences))
+mmm<-dbGetQuery(con,"SELECT * FROM sentences_temp;")
+print(paste("Got",nrow(mmm),"sentences in",signif(unname(time[3]),3),"seconds."))
 #label, number, and clean result
+mm<-mmm[!duplicated(mmm[c("docid","sentid")]),]
 time<-system.time(mus<-data.frame(docid=mm[,"docid"],sentid=mm[,"sentid"],
                                   words=unname(sapply(mm$words,cleanWords,museumAbbrs$abbr)),
                                   rownum=as.numeric(rownames(mm)),stringsAsFactors = F))
-print(paste("Got",nrow(mus),"sentences in",signif(unname(time[3]),3),"seconds."))
+print(paste("Cleaned",nrow(mus),"sentences in",signif(unname(time[3]),3),"seconds."))
 rm(mm)
 
 #grep all museumAbbrs against all sentences, with spaces added to avoid the "UCMP"/"UCM"/"CM" problem
