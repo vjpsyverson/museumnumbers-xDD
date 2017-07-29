@@ -141,19 +141,22 @@ print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
 getDocIDs<-function(abbr){
   APIurl<-paste0('https://geodeepdive.org/api/articles?term=',abbr,'&fields=_gddid')
-  result<-data.frame(jsonlite::fromJSON(APIurl,flatten=TRUE))["success._gddid"]
+  jsonList<-tryCatch(jsonlite::fromJSON(APIurl,flatten=TRUE)),error=function(e) {result<-'fail';stop(e);})
+  result<-data.frame(jsonList)["success._gddid"]
 }
 getSentences<-function(namepair){
   docIDs<-getDocIDs(namepair["abbr"])
-  print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["abbr"],". Searching for ",namepair["fullname"],"...",collapse=""))
-  dbWriteTable(con,"ids",data.frame(gddid=unname(docIDs)),row.names=F)
-  query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 JOIN (SELECT sentences_nlp352.docid FROM sentences_nlp352 JOIN ids ON ids.gddid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["fullname"],"') b ON b.docid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["abbr"],"';",collapse="")
-  result<-dbGetQuery(con,query)
-  if(nrow(result)>0){
-    dbWriteTable(con,"addsents",result,row.names=F)
-    dbSendQuery(con,"INSERT INTO sentences_temp SELECT * FROM addsents;DROP TABLE ids;DROP TABLE addsents;")
-  } 
-  print(paste0("Got ",nrow(result)," sentences for ",namepair["fullname"]," / ",namepair["abbr"],".",collapse = ""))
+  if(docIDs!='fail') {
+    print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["abbr"],". Searching for ",namepair["fullname"],"...",collapse=""))
+    dbWriteTable(con,"ids",data.frame(gddid=unname(docIDs)),row.names=F)
+    query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 JOIN (SELECT sentences_nlp352.docid FROM sentences_nlp352 JOIN ids ON ids.gddid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["fullname"],"') b ON b.docid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["abbr"],"';",collapse="")
+    result<-dbGetQuery(con,query)
+    if(nrow(result)>0){
+      dbWriteTable(con,"addsents",result,row.names=F)
+      dbSendQuery(con,"INSERT INTO sentences_temp SELECT * FROM addsents;DROP TABLE ids;DROP TABLE addsents;")
+    } 
+    print(paste0("Got ",nrow(result)," sentences for ",namepair["fullname"]," / ",namepair["abbr"],".",collapse = ""))
+  }
 }
 print("Getting sentences...")
 list<-names(jsonlite::fromJSON("https://geodeepdive.org/api/dictionaries?dict_id=20&show_terms=true")$success$data$term_hits)
