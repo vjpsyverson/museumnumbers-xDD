@@ -1,96 +1,98 @@
-"fullname","abbr"
-"Centro de Investigaciones en Recursos Geológicos","CIRGEO"
-"Nanjing Institute of Geology and Paleontology","NIGPAS"
-"Florida Museum of Natural History","FLMNH"
-"New Mexico Museum of Natural History","NMMNH"
-"Oxford University Museum of Natural History","OUMNH"
-"Museo Nacional de Historia Natural","SGOPV"
-"American Museum of Natural History","AMNH"
-"Athens Museum of Paleontology and Geology","AMPG"
-"Academy of Natural Sciences of Drexel University","ANSP"
-"Academy of Natural Sciences of Philadelphia","ANSP"
-"Natural History Museum","BMNH"
-"British Museum of Natural History","BMNH"
-"Brigham Young University","BYUP"
-"Denver Museum of Natural History","DMNH"
-"Eidgenössische Technische Hochschule Zürich","ETHZ"
-"Field Museum of Natural History","FMNH"
-"Florida Museum of Natural History","FMNH"
-"New Zealand Geological Survey","IGNS"
-"Instituut voor Aardwetenschappen","IVAU"
-"Institute of Vertebrate Paleontology and Paleoanthropology","IVPP"
-"Natural History Museum of Los Angeles County","LACM"
-"Los Angeles County Museum of Natural History","LACM"
-"Geological Museum, University of Copenhagen","MGUH"
-"Musée National d’Histoire Naturelle","MNHN"
-"Museo Paleontológico Egidio Feruglio","MPEF"
-"Naturhistorisches Museum Wien","NHMW"
-"Nanjing Institute of Geology and Paleontology","NIGP"
-"Smithsonian National Museum of Natural History","NMNH"
-"Smithsonian Museum","NMNH"
-"New York State Museum","NYSM"
-"Oklahoma Museum of Natural History","OMNH"
-"South Dakota School of Mines","SDSM"
-"Staatliches Museum für Naturkunde","SMNS"
-"University of California Museum of Paleontology","UCMP"
-"University of Michigan Museum of Paleontology","UMMP"
-"University of Nebraska State Museum","UNSM"
-"Université Pierre et Marie Curie","UPMC"
-"Pierre and Marie Curie University","UPMC"
-"U. S. National Museum","USNM"
-"Smithsonian Museum","USNM"
-"United States National Museum","USNM"
-"Burke Museum","UWBM"
-"Institute of Paleobiology, Polish Academy of Sciences","ZPAL"
-"British Antarctic Survey","BAS"
-"Geological Survey Museum","BGS"
-"Bernard Price Institute","BPI"
-"Bayerische Staatssammlung fur Geologie und Paläontologie","BSP"
-"Paläontologisches Museum München","BSP"
-"California Academy of Sciences","CAS"
-"California Institute of Technology","CIT"
-"Collección Mamíferos Lillo","CML"
-"Canadian Museum of Nature","CMN"
-"Ethiopian National Museum","ENM"
-"National Museum of Ethiopia","ENM"
-"Eidgenössische Technische Hochschule Zürich","ETH"
-"Geological Survey of Canada","GSC"
-"Geological Survey of India","GSI"
-"Mongolian Institute of Geology","IGM"
-"Nairobi National Museum","KNM"
-"Kenya National Museum","KNM"
-"National Museums of Kenya","KNM"
-"Harvard Museum of Comparative Zoology","MCZ"
-"Museo Paleontológico Egidio Feruglio","MEF"
-"Museo de La Plata","MLP"
-"Museum of the Rockies","MOR"
-"Museum für Naturkunde","MfN"
-"Natural History Museum","NHM"
-"Naturhistorisches Museum Basel","NMB"
-"National Museum of Canada","NMC"
-"Ohio State University","OSU"
-"Oxford University Museum","OUM"
-"Paleontological Institute","PIN"
-"Paleontological Research Institute","PRI"
-"Royal Ontario Museum","ROM"
-"Senckenberg Museum","SMF"
-"University of Iowa","SUI"
-"Texas Memorial Museum","TMM"
-"University of Texas","TMM"
-"Royal Tyrrell Museum","TMP"
-"Tyrrell Museum of Paleontology","TMP"
-"University of Colorado","UCM"
-"University of New Mexico","UNM"
-"Western Australia Museum","WAM"
-"Yale Peabody Museum","YPM"
-"Carnegie Museum of Natural History","CM"
-"Museum für Naturkunde","MB"
-"Otago University","OM"
-"Otago University","OU"
-"Oklahoma University","OU"
-"Sedgwick Museum","SM"
-"Senckenberg Museum","SM"
-"University of Queensland","UQ"
-"University of Washington","UW"
-"Museo Argentino de Ciencias Naturales","MACN"
-"Natural History Museum","NHMW"
+fullname,abbr
+Centro de Investigaciones en Recursos Geológicos,CIRGEO
+Nanjing Institute of Geology and Paleontology,NIGPAS
+Florida Museum of Natural History,FLMNH
+New Mexico Museum of Natural History,NMMNH
+Oxford University Museum of Natural History,OUMNH
+Museo Nacional de Historia Natural,SGOPV
+American Museum of Natural History,AMNH
+Athens Museum of Paleontology and Geology,AMPG
+Academy of Natural Sciences of Drexel University,ANSP
+Academy of Natural Sciences of Philadelphia,ANSP
+Natural History Museum,BMNH
+British Museum of Natural History,BMNH
+Brigham Young University,BYUP
+Denver Museum of Natural History,DMNH
+Eidgenössische Technische Hochschule Zürich,ETHZ
+Field Museum of Natural History,FMNH
+Field Museum,FMNH
+Florida Museum of Natural History,FMNH
+New Zealand Geological Survey,IGNS
+Instituut voor Aardwetenschappen,IVAU
+Institute of Vertebrate Paleontology and Paleoanthropology,IVPP
+Natural History Museum of Los Angeles County,LACM
+Los Angeles County Museum of Natural History,LACM
+"Geological Museum, University of Copenhagen",MGUH
+Musée National d’Histoire Naturelle,MNHN
+Museo Paleontológico Egidio Feruglio,MPEF
+Naturhistorisches Museum Wien,NHMW
+Nanjing Institute of Geology and Paleontology,NIGP
+Smithsonian National Museum of Natural History,NMNH
+Smithsonian Museum,NMNH
+New York State Museum,NYSM
+Oklahoma Museum of Natural History,OMNH
+South Dakota School of Mines,SDSM
+Staatliches Museum für Naturkunde,SMNS
+University of California Museum of Paleontology,UCMP
+University of Michigan Museum of Paleontology,UMMP
+University of Nebraska State Museum,UNSM
+Université Pierre et Marie Curie,UPMC
+Pierre and Marie Curie University,UPMC
+U. S. National Museum,USNM
+Smithsonian Museum,USNM
+United States National Museum,USNM
+Burke Museum,UWBM
+"Institute of Paleobiology, Polish Academy of Sciences",ZPAL
+British Antarctic Survey,BAS
+Geological Survey Museum,BGS
+Bernard Price Institute,BPI
+Bayerische Staatssammlung fur Geologie und Paläontologie,BSP
+Paläontologisches Museum München,BSP
+California Academy of Sciences,CAS
+California Institute of Technology,CIT
+Collección Mamíferos Lillo,CML
+Canadian Museum of Nature,CMN
+Ethiopian National Museum,ENM
+National Museum of Ethiopia,ENM
+Eidgenössische Technische Hochschule Zürich,ETH
+Geological Survey of Canada,GSC
+Geological Survey of India,GSI
+Mongolian Institute of Geology,IGM
+Nairobi National Museum,KNM
+Kenya National Museum,KNM
+National Museums of Kenya,KNM
+Harvard Museum of Comparative Zoology,MCZ
+Museo Paleontológico Egidio Feruglio,MEF
+Museo de La Plata,MLP
+Museum of the Rockies,MOR
+Museum für Naturkunde,MfN
+Natural History Museum,NHM
+Naturhistorisches Museum Basel,NMB
+National Museum of Canada,NMC
+Ohio State University,OSU
+Oxford University Museum,OUM
+Paleontological Institute,PIN
+Paleontological Research Institute,PRI
+Royal Ontario Museum,ROM
+Senckenberg Museum,SMF
+University of Iowa,SUI
+Texas Memorial Museum,TMM
+University of Texas,TMM
+Royal Tyrrell Museum,TMP
+Tyrrell Museum of Paleontology,TMP
+University of Colorado,UCM
+University of New Mexico,UNM
+Western Australia Museum,WAM
+Yale Peabody Museum,YPM
+Carnegie Museum of Natural History,CM
+Museum für Naturkunde,MB
+Otago University,OM
+Otago University,OU
+Oklahoma University,OU
+Sedgwick Museum,SM
+Senckenberg Museum,SM
+Florida Museum of Natural History,UF
+University of Queensland,UQ
+University of Washington,UW
+Museo Argentino de Ciencias Naturales,MACN
+Natural History Museum,NHMW

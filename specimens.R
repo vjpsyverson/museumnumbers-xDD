@@ -119,9 +119,9 @@ if (require("rjson",warn.conflicts=FALSE)==FALSE) {
   install.packages("rjson",repos="http://cran.cnr.berkeley.edu/");
   library("rjson");
 }
-options(stringsAsFactors = FALSE)
+options(stringsAsFactors = FALSE,encoding="UTF-8")
 
-#connect to PostgreSQL
+#if running remotely: first do "ssh -L 5432:localhost:5432 substrata"
 #Credentials<-as.matrix(read.table(file.path(this.dir,"credentials.yaml"),row.names=1,fill=TRUE))
 Credentials<-as.matrix(read.table(file.path(getwd(),"credentials.yaml"),row.names=1,fill=TRUE))
 drv<-dbDriver("PostgreSQL")

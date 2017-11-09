@@ -14,21 +14,21 @@ cleanWords<-function(x,abbrs){
     loc<-which(grepl(abbrs[i],result)&!grepl(paste0(abbrs[i],"$",collapse=""),result)&!grepl(paste0(abbrs[1:(i-1)],collapse="|"),result))
     result[loc]<-gsub(abbrs[i],paste0(abbrs[i]," "),result[loc])
   } #if this is stupid move it into extractFromSentence() so it executes with the other greps there
-  return(paste0(result,collapse=' ')) #put it back together with spaces instead
+  return(paste0(result,collapse=Table 1. Regeneration frequencies for populations of disarticulated spines. The observed regeneration frequency and distribution of breakage locations were used to infer the true frequency of nonlethal damage in the living population. For details on the method of estimation, see text.' ')) #put it back together with spaces instead
 }
 ##the real functions
 getDocIDs<-function(abbr){
-  APIurl<-paste0('https://geodeepdive.org/api/articles?term=',abbr,'&fields=_gddid')
+  APIurl<-URLencode(paste0('https://geodeepdive.org/api/articles?term=',abbr,'&fields=_gddid'))
   result<-try(data.frame(jsonlite::fromJSON(APIurl,flatten=TRUE))["success._gddid"],silent=T)
   return(result)
 }
 
 getSentences<-function(namepair){
-  docIDs<-getDocIDs(namepair["abbr"])
+  docIDs<-getDocIDs(namepair["fullname"])
   if (class(docIDs)=='try-error') {
     result<-matrix(0,nrow=0,ncol=0)
   } else {
-    print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["abbr"],". Searching for ",namepair["fullname"],"...",collapse=""))
+    print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["fullname"],". Searching for ",namepair["fullname"],"...",collapse=""))
     dbWriteTable(con,"ids",data.frame(gddid=unname(docIDs)),row.names=F)
     query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 JOIN (SELECT sentences_nlp352.docid FROM sentences_nlp352 JOIN ids ON ids.gddid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["fullname"],"') b ON b.docid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["abbr"],"';",collapse="")
     result<-dbGetQuery(con,query)
@@ -109,19 +109,19 @@ getNumbersAfter<-function(abbrLoc,words){
   start<-abbrLoc
   end<-start+1
   sentEnded<-F
-  while (grepl("[[:digit:]]|^[IVXLCM]+$",words[end])==T|words[end]%in%fillers) {
-    if (words[end]%in%fillers | grepl("^[IVXLCM]+$",words[end])) { 
+  while (grepl("[[:digit:]]|^[IVXLC]+$",words[end])==T|words[end]%in%fillers) {
+    if (words[end]%in%fillers | grepl("^[IVXLC]+$",words[end])) { 
       if (words[end] == "." & end==length(words)){
         sentEnded <- T
         break
       } else {
-        if (grepl("^[[:punct:]]+$|^[IVXLCM]+$",words[end]) & words[end]!=",") {
+        if (grepl("^[[:punct:]]+$|^[IVXLC]+$",words[end]) & words[end]!=",") {
           speclocs<-c(speclocs,end)
         }
         end<-end+1 #move on
       }
-    } else if (grepl("[[:digit:]]",words[end]) & !grepl("(^[[:digit:]]*x[[:digit:]])|(^[[:digit:]]+\\.[[:digit:]]+$)|(^[[:digit:]]+[c|d|k|m]?m$)|(^d[0-9]{2}[A-Z]{1}$)",words[end])) {
-      #not: dimensions eg "10x12"; a measurement in cm/dm/km/mm; an isotopic ratio 
+    } else if (grepl("[[:digit:]]",words[end]) & !grepl("(^[[:digit:]]*x[[:digit:]])|(^[[:digit:]]+\\.[[:digit:]]+$)|(^[[:digit:]]+[c|d|k|m]?m$)|(^d[0-9]{2}[A-Z]{1}$)|([I,C,PM,P,M]{1}[[:digit:]]{1}$)",words[end])) {
+      #not: dimensions eg "10x12"; a measurement in cm/dm/km/mm; an isotopic ratio; a tooth 
       speclocs<-c(speclocs,end)
       end<-end+1
     } else { break }
@@ -146,8 +146,9 @@ if (require("curl",warn.conflicts=FALSE)==FALSE) {
   install.packages("curl",repos="http://cran.cnr.berkeley.edu/");
   library("curl");
 }
-options(stringsAsFactors = FALSE)
+options(stringsAsFactors = FALSE,encoding="UTF-8")
 
+#if running remotely: first do "ssh -L 5432:localhost:5432 substrata"
 #connect to PostgreSQL
 #Credentials<-as.matrix(read.table(file.path(this.dir,"credentials.yaml"),row.names=1,fill=TRUE))
 Credentials<-as.matrix(read.table(file.path(getwd(),"credentials.yaml"),row.names=1,fill=TRUE))
