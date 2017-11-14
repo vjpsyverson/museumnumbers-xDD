@@ -28,7 +28,7 @@ getSentences<-function(namepair){
   if (class(docIDs)=='try-error') {
     result<-matrix(0,nrow=0,ncol=0)
   } else {
-    print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["fullname"],", ",namepair["fullname"],". Searching for sentences...",collapse=""))
+    print(paste0("API reports ",nrow(docIDs)," documents for ",namepair["fullname"],". Searching for ",namepair["fullname"],"...",collapse=""))
     dbWriteTable(con,"ids",data.frame(gddid=unname(docIDs)),row.names=F)
     query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words FROM sentences_nlp352 JOIN (SELECT sentences_nlp352.docid FROM sentences_nlp352 JOIN ids ON ids.gddid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["fullname"],"') b ON b.docid=sentences_nlp352.docid WHERE array_to_string(words,' ') ~ '",namepair["abbr"],"';",collapse="")
     result<-dbGetQuery(con,query)
@@ -37,7 +37,7 @@ getSentences<-function(namepair){
     dbWriteTable(con,"addsents",result,row.names=F)
     dbSendQuery(con,"INSERT INTO sentences_temp SELECT * FROM addsents;DROP TABLE ids;DROP TABLE addsents;")
   } 
-  print(paste0("Got ",nrow(result)," sentences from ",length(unique(result["docid"]))," documents for ",namepair["fullname"]," / ",namepair["abbr"],".",collapse = ""))
+  print(paste0("Got ",nrow(result)," sentences for ",namepair["fullname"]," / ",namepair["abbr"],".",collapse = ""))
 }
 
 extractFromList<-function(instSpecList,data){
@@ -132,6 +132,7 @@ getNumbersAfter<-function(abbrLoc,words){
   }
 }
 
+
 #----------------------SETUP: INSTALL LIBRARIES, FIND DIRECTORY, CONNECT TO POSTGRES----------------------------#
 if (require("RPostgreSQL",warn.conflicts=FALSE)==FALSE) {
   install.packages("RPostgreSQL",repos="http://cran.cnr.berkeley.edu/");
@@ -163,8 +164,8 @@ museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
 print(paste("Got",nrow(museumAbbrs),"institution names"))
 #get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
 print("Getting sentences...")
-dict<-names(jsonlite::fromJSON("https://geodeepdive.org/api/dictionaries?dict_id=35&show_terms=true")$success$data$term_hits)
-museumAbbrs<-subset(museumAbbrs,museumAbbrs$abbr%in%intersect(dict$abbr,museumAbbrs$abbr))
+list<-names(jsonlite::fromJSON("https://geodeepdive.org/api/dictionaries?dict_id=20&show_terms=true")$success$data$term_hits)
+museumAbbrs<-subset(museumAbbrs,museumAbbrs$abbr%in%intersect(list,museumAbbrs$abbr))
 dbSendQuery(con,"DROP TABLE IF EXISTS sentences_temp;CREATE TABLE sentences_temp (docid text,sentid integer,words text);DROP TABLE IF EXISTS ids;DROP TABLE IF EXISTS addsents;")
 time<-system.time(apply(museumAbbrs,1,getSentences))
 mmm<-dbGetQuery(con,"SELECT * FROM sentences_temp;")

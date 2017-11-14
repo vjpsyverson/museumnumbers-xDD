@@ -86,19 +86,19 @@ getNumbersAfter<-function(abbrLoc,words){
   start<-abbrLoc
   end<-start+1
   sentEnded<-F
-  while (grepl("[[:digit:]]|^[IVXLCM]+$",words[end])==T|words[end]%in%fillers) {
-    if (words[end]%in%fillers | grepl("^[IVXLCM]+$",words[end])) { 
+  while (grepl("[[:digit:]]|^[IVXLC]+$",words[end])==T|words[end]%in%fillers) {
+    if (words[end]%in%fillers | grepl("^[IVXLC]+$",words[end])) { 
       if (words[end] == "." & end==length(words)){
         sentEnded <- T
         break
       } else {
-        if (grepl("^[[:punct:]]+$|^[IVXLCM]+$",words[end]) & words[end]!=",") {
+        if (grepl("^[[:punct:]]+$|^[IVXLC]+$",words[end]) & words[end]!=",") {
           speclocs<-c(speclocs,end)
         }
         end<-end+1 #move on
       }
-    } else if (grepl("[[:digit:]]",words[end]) & !grepl("(^[[:digit:]]*x[[:digit:]])|(^[[:digit:]]+\\.[[:digit:]]+$)|(^[[:digit:]]+[c|d|k|m]?m$)|(^d[0-9]{2}[A-Z]{1}$)",words[end])) {
-      #not: dimensions eg "10x12"; a measurement in cm/dm/km/mm; an isotopic ratio 
+    } else if (grepl("[[:digit:]]",words[end]) & !grepl("(^[[:digit:]]*x[[:digit:]])|(^[[:digit:]]+\\.[[:digit:]]+$)|(^[[:digit:]]+[c|d|k|m]?m$)|(^d[0-9]{2}[A-Z]{1}$)|([I,C,PM,P,M]{1}[[:digit:]]{1}$)",words[end])) {
+      #not: dimensions eg "10x12"; a measurement in cm/dm/km/mm; an isotopic ratio; a tooth 
       speclocs<-c(speclocs,end)
       end<-end+1
     } else { break }
@@ -108,7 +108,6 @@ getNumbersAfter<-function(abbrLoc,words){
     return(unique(result))
   }
 }
-
 
 #----------------------SETUP: INSTALL LIBRARIES, FIND DIRECTORY, CONNECT TO POSTGRES----------------------------#
 if (require("RPostgreSQL",warn.conflicts=FALSE)==FALSE) {
@@ -133,16 +132,7 @@ con<-dbConnect(drv, dbname = Credentials["database:",], host = Credentials["host
 #museumAbbrs<-dbGetQuery(con,"SELECT * FROM mus_abbrs")
 museumAbbrs<-read.csv(file="mus_abbrs.csv")
 museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
-print(paste("Got",nrow(museumAbbrs),"institution names"))
-#get sentences from SQL containing at least one abbreviation from museumAbbrs and the string "specimen*"
-#  old regexp-y version, commented out:
-#  query<-paste0("SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 
-#              JOIN (SELECT DISTINCT docid FROM sentences_nlp352 WHERE array_to_string(words,' ') ~ 'specimen' 
-#              AND array_to_string(words,' ') ~ ' ", paste(museumAbbrs$fullname,sep="",collapse=" | "), " ') a 
-#              ON a.docid=sentences_nlp352.docid WHERE array_to_string(sentences_nlp352.words,' ') ~ '",
-#              paste(museumAbbrs$abbr,sep="",collapse="|")," ';")
-#  print("Querying database for sentences...")
-#  time<-system.time(dbSendQuery(con,query))
+print(paste("Got",nrow(museumAbbrs),"institution names."))
 dbSendQuery(con,"DROP TABLE IF EXISTS mus_abbrs;DROP TABLE IF EXISTS sentences_temp;")
 dbWriteTable(con,"mus_abbrs",museumAbbrs,row.names=F)
 query<-"SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 JOIN 
@@ -168,14 +158,15 @@ names(instRows)<-sort(unique(museumAbbrs$abbr))
 #(this is a wrapper function three apply()s deep, be warned)
 print("Extracting specimen numbers...")
 time<-system.time(specimens<-extractFromList(instRows,mus))
-print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3),"seconds. Results in output/specimens.csv"))
+dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
+dbWriteTable(con,"specimens",specimens,row.names=F)
+print(paste("Got",nrow(specimens),"specimen numbers in",signif(unname(time[3]),3),"seconds."))
 
 #----------------------OUTPUT RESULTS------------------------#
 write.csv(specimens,"output/specimens.csv",row.names = F)
+print("Results saved to output/specimens.csv and in database as table 'specimens'.")
 
 #optional stats output
-#dbSendQuery(con,"DROP TABLE IF EXISTS specimens;")
-#dbWriteTable(con,"specimens",specimens,row.names=F)
 #ndocs<-dbGetQuery(con,"SELECT DISTINCT concat_ws(' ', a.abbr, a.specno), count(*) FROM (SELECT DISTINCT docid,abbr,specno FROM specimens AS a) a GROUP BY concat_ws(' ', a.abbr, a.specno);")
 #ndocs<-ndocs[order(ndocs$count,ndocs$concat_ws,decreasing=T),]
 #write.csv(ndocs,"n_docs_mentioning_specimen.csv",row.names = F)
