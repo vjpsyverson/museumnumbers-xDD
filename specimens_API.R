@@ -147,7 +147,7 @@ if (require("curl",warn.conflicts=FALSE)==FALSE) {
 }
 options(stringsAsFactors = FALSE,encoding="UTF-8")
 
-#if running remotely: first do "ssh -L 5432:localhost:5432 substrata"
+#if running remotely: first do "teststrata_tunnel"
 #connect to PostgreSQL
 #Credentials<-as.matrix(read.table(file.path(this.dir,"credentials.yaml"),row.names=1,fill=TRUE))
 Credentials<-as.matrix(read.table(file.path(getwd(),"credentials.yaml"),row.names=1,fill=TRUE))

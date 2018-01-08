@@ -135,10 +135,7 @@ museumAbbrs<-museumAbbrs[order(sapply(museumAbbrs$abbr,nchar),decreasing=T),]
 print(paste("Got",nrow(museumAbbrs),"institution names."))
 dbSendQuery(con,"DROP TABLE IF EXISTS mus_abbrs;DROP TABLE IF EXISTS sentences_temp;")
 dbWriteTable(con,"mus_abbrs",museumAbbrs,row.names=F)
-query<-"SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 JOIN 
-(SELECT DISTINCT sentences_nlp352.docid,mus_abbrs.abbr FROM sentences_nlp352 JOIN mus_abbrs 
-ON array_to_string(sentences_nlp352.words,' ') ~ mus_abbrs.fullname) a
-ON a.docid=sentences_nlp352.docid AND array_to_string(sentences_nlp352.words,' ') ~ a.abbr;"
+query<-"SELECT sentences_nlp352.docid,sentences_nlp352.sentid,sentences_nlp352.words INTO sentences_temp FROM sentences_nlp352 JOIN (SELECT DISTINCT sentences_nlp352.docid,mus_abbrs.abbr FROM sentences_nlp352 JOIN mus_abbrs ON array_to_string(sentences_nlp352.words,' ') ~ mus_abbrs.fullname) a ON a.docid=sentences_nlp352.docid AND array_to_string(sentences_nlp352.words,' ') ~ a.abbr;"
 print("Getting sentences...")
 dbSendQuery(con,query)
 mm<-dbGetQuery(con,"SELECT * FROM sentences_temp;")
