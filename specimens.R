@@ -92,7 +92,7 @@ getNumbersAfter<-function(abbrLoc,words){
         sentEnded <- T
         break
       } else {
-        if (grepl("^[[:punct:]]+$|^[IVXLC]+$",words[end]) & words[end]!=",") {
+        if (grepl("^[[:punct:]]+$|^[IVXLC]+$",words[end]) & words[end]!="," & words[end]!=";") {
           speclocs<-c(speclocs,end)
         }
         end<-end+1 #move on
